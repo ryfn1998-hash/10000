@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>直播專用計數器 - FR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        /* --- @FR科技公司版權所有 嚴禁轉載本網站所有程式碼 --- */
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent; /* 方便 OBS 去背或直接疊加 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* 數字面板樣式 */
+        .odometer-wrapper {
+            background: rgba(10, 15, 30, 0.9); /* 深色半透明底色 */
+            padding: 30px 60px;
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .odometer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 120px; /* 直播建議大字體 */
+            font-weight: 900;
+            color: #fff;
+            height: 140px;
+            line-height: 140px;
+            letter-spacing: -2px;
+            text-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* 強調發光效果 */
+        }
+
+        .digit-box {
+            height: 140px;
+            width: 80px;
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+
+        .digit-box.active { display: block; }
+
+        .digit-list {
+            position: absolute;
+            width: 100%;
+            transition: transform 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+
+        .digit-list div { height: 140px; text-align: center; }
+
+        .comma {
+            font-size: 100px;
+            color: #fff;
+            display: none;
+            padding-top: 10px;
+            font-weight: 900;
+        }
+        .comma.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="odometer-wrapper">
+    <div id="roller" class="odometer"></div>
+</div>
+
+<script>
+    /* --- @FR科技公司版權所有 嚴禁轉載本網站所有程式碼 --- */
+    const firebaseConfig = {
+        apiKey: "AIzaSyAhstatd52tItPyVGs0yFpMr72r9yFpVY",
+        authDomain: "project-3642988709307035960.firebaseapp.com",
+        databaseURL: "https://project-3642988709307035960-default-rtdb.firebaseio.com",
+        projectId: "project-3642988709307035960",
+        appId: "1:119344257869:web:4e9c095e23eaa7bb1db504"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function initRoller() {
+        const r = document.getElementById('roller'); r.innerHTML = "";
+        for (let i = 0; i < 10; i++) {
+            if (i > 0 && i % 3 === 0) { 
+                const c = document.createElement('div'); 
+                c.className = "comma"; c.id = `comma-${i}`; c.innerText = ","; 
+                r.insertBefore(c, r.firstChild); 
+            }
+            const b = document.createElement('div'); 
+            b.className = "digit-box"; b.id = `box-${i}`;
+            let l = `<div class="digit-list" id="list-${i}">`;
+            for (let j = 0; j <= 9; j++) l += `<div>${j}</div>`;
+            l += `<div>0</div></div>`; 
+            b.innerHTML = l; 
+            r.insertBefore(b, r.firstChild);
+        }
+    }
+
+    initRoller();
+
+    function render(num) {
+        let s = num.toString().padStart(10, "0");
+        for (let i = 0; i < 10; i++) {
+            const box = document.getElementById(`box-${i}`);
+            const list = document.getElementById(`list-${i}`);
+            const val = parseInt(s[s.length - 1 - i]);
+            if (i < num.toString().length) {
+                box.classList.add('active');
+                if (i % 3 === 0 && i > 0) document.getElementById(`comma-${i}`).classList.add('active');
+                list.style.transform = `translateY(-${val * 140}px)`;
+            }
+        }
+    }
+
+    db.ref('global_counter').on('value', s => render(s.val() || 0));
+</script>
+</body>
+</html>
