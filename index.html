@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>直播專用計數器 - FR</title>
+    <title>全球點擊挑戰-直播專用計數器 - FR</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -11,7 +11,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: transparent; /* 方便 OBS 去背或直接疊加 */
+            background: transparent; /* 方便 OBS 疊加 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,32 +22,55 @@
 
         /* 數字面板樣式 */
         .odometer-wrapper {
-            background: rgba(10, 15, 30, 0.9); /* 深色半透明底色 */
-            padding: 30px 60px;
-            border-radius: 30px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+            background: rgba(0, 0, 0, 0.8); /* 深色底，突出彩色 */
+            padding: 40px 80px;
+            border-radius: 40px;
+            /* 面板邊框也加上微弱的彩色 */
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 60px rgba(0, 0, 0, 1);
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
+            overflow: hidden;
         }
 
+        /* 彩虹漸變核心：套用到數字和逗號 */
         .odometer {
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 120px; /* 直播建議大字體 */
+            font-size: 150px; /* 再次放大，更適合直播 */
             font-weight: 900;
-            color: #fff;
-            height: 140px;
-            line-height: 140px;
-            letter-spacing: -2px;
-            text-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* 強調發光效果 */
+            height: 170px;
+            line-height: 170px;
+            letter-spacing: -4px;
+            
+            /* --- 彩虹文字實現 --- */
+            background: linear-gradient(
+                to right, 
+                #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* 彩虹移動動畫 */
+            animation: rainbow-shift 5s linear infinite;
+            
+            /* --- 彩色發光效果 --- */
+            /* 由於文字變透明，需要用 filter 來做發光 */
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+        }
+
+        /* 彩虹移動動畫定義 */
+        @keyframes rainbow-shift {
+            to { background-position: 200% center; }
         }
 
         .digit-box {
-            height: 140px;
-            width: 80px;
+            height: 170px;
+            width: 100px;
             position: relative;
             overflow: hidden;
             display: none;
@@ -58,19 +81,30 @@
         .digit-list {
             position: absolute;
             width: 100%;
+            /* 滾動動畫速度維持 0.8s */
             transition: transform 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
         }
 
-        .digit-list div { height: 140px; text-align: center; }
+        .digit-list div { height: 170px; text-align: center; }
 
         .comma {
-            font-size: 100px;
-            color: #fff;
+            /* 逗號自動繼承父層的彩虹漸變和動畫 */
+            font-size: 130px;
             display: none;
-            padding-top: 10px;
+            padding-top: 15px;
             font-weight: 900;
         }
         .comma.active { display: block; }
+        
+        /* 為了讓 filter 發光更明顯，在數字上方疊加一層微弱的白色發光 */
+        .odometer::after {
+            content: attr(data-value);
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            z-index: -1;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +147,9 @@
 
     function render(num) {
         let s = num.toString().padStart(10, "0");
+        const roller = document.getElementById('roller');
+        roller.setAttribute('data-value', num.toLocaleString()); // 用於疊加發光
+
         for (let i = 0; i < 10; i++) {
             const box = document.getElementById(`box-${i}`);
             const list = document.getElementById(`list-${i}`);
@@ -120,7 +157,8 @@
             if (i < num.toString().length) {
                 box.classList.add('active');
                 if (i % 3 === 0 && i > 0) document.getElementById(`comma-${i}`).classList.add('active');
-                list.style.transform = `translateY(-${val * 140}px)`;
+                // 這裡的高與 CSS 樣式必須一致 (170px)
+                list.style.transform = `translateY(-${val * 170}px)`;
             }
         }
     }
