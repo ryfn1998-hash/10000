@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>全球點擊挑戰 直播專用計數器 - FR</title>
+    <title>全球點擊挑戰直播專用 - 幻彩外框計數器 - FR</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -11,7 +11,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #000; /* 直播時在 OBS 濾鏡選「色彩鍵」去背黑色即可，或設為 transparent */
+            background: transparent; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -20,37 +20,40 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* --- 這裡修改外框背景為流動彩色 --- */
         .odometer-wrapper {
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px 50px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            /* 彩色漸變背景 */
+            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
+            background-size: 600% 600%; /* 放大背景尺寸以便移動 */
+            animation: flow-bg 10s ease infinite; /* 背景流動動畫 */
+            
+            padding: 30px 60px;
+            border-radius: 35px;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 40px rgba(0,0,0,1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            position: relative;
         }
 
+        /* 背景流動動畫定義 */
+        @keyframes flow-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 數字顯示，維持白色並加強陰影，確保在彩色背景下清晰 */
         .odometer {
             display: flex;
             align-items: center;
             font-size: 150px;
             font-weight: 900;
-            height: 180px; /* 固定高度 */
+            height: 180px;
             line-height: 180px;
-            /* 讓整個區域變彩色 */
-            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
-            background-size: 400% 100%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: rainbow-flow 8s linear infinite;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
-        }
-
-        @keyframes rainbow-flow {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
+            color: #ffffff; /* 數字維持白色 */
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* 增加黑影避免被背景吃掉 */
         }
 
         .digit-box {
@@ -83,7 +86,10 @@
             display: none;
             align-items: center;
             justify-content: center;
-            padding-bottom: 20px; /* 逗號稍微往上提一點 */
+            font-size: 130px;
+            color: #fff;
+            padding-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
         .comma.active { display: flex; }
     </style>
@@ -109,9 +115,7 @@
     function initRoller() {
         const r = document.getElementById('roller'); 
         r.innerHTML = "";
-        // 建立 10 位數空間
         for (let i = 0; i < 10; i++) {
-            // 每三位加一個逗號
             if (i > 0 && i % 3 === 0) {
                 const c = document.createElement('div');
                 c.className = "comma";
@@ -119,7 +123,6 @@
                 c.innerText = ",";
                 r.insertBefore(c, r.firstChild);
             }
-            // 數字方塊
             const b = document.createElement('div');
             b.className = "digit-box";
             b.id = `box-${i}`;
@@ -136,19 +139,16 @@
     function render(num) {
         const s = num.toString();
         const fullStr = s.padStart(10, "0");
-        
         for (let i = 0; i < 10; i++) {
             const box = document.getElementById(`box-${i}`);
             const list = document.getElementById(`list-${i}`);
             const val = parseInt(fullStr[10 - 1 - i]);
-
             if (i < s.length) {
                 box.classList.add('active');
                 if (i % 3 === 0 && i > 0) {
                     const comma = document.getElementById(`comma-${i}`);
                     if(comma) comma.classList.add('active');
                 }
-                // 核心修復：強制對齊位移量
                 list.style.transform = `translateY(-${val * 180}px)`;
             } else {
                 box.classList.remove('active');
@@ -158,10 +158,7 @@
         }
     }
 
-    db.ref('global_counter').on('value', s => {
-        const val = s.val() || 0;
-        render(val);
-    });
+    db.ref('global_counter').on('value', s => render(s.val() || 0));
 </script>
 </body>
 </html>
